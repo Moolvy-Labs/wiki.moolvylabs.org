@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wiki.moolvylabs</title>
+    <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@5.1.0/400.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@5.1.0/600.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        light: { bg: '#ffffff', surface: '#f9fafb', border: '#e5e7eb', text: '#111827', muted: '#6b7280' },
+                        dark: { bg: '#0a0a0a', surface: '#171717', border: '#262626', text: '#ededed', muted: '#a3a3a3' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #404040; }
+        .file-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .file-card:hover { transform: translateY(-2px); }
+
+        /* Loader Animation */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-light-border dark:border-dark-border bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-md">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-bold text-sm">W</div>
+                <h1 class="text-xl font-semibold tracking-tight">wiki.moolvylabs</h1>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors">
+                <svg id="sun-icon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="moon-icon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+        <div class="mb-12 text-center">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">Knowledge Base</h2>
+            <p class="text-light-muted dark:text-dark-muted max-w-2xl mx-auto text-lg">
+                Moolvylabs
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative mb-10 max-w-xl mx-auto">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+            <input type="text" id="search-input" class="block w-full pl-10 pr-3 py-3 border border-light-border dark:border-dark-border rounded-xl leading-5 bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent sm:text-sm transition-all shadow-sm" placeholder="file search...">
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="flex justify-center py-20">
+            <div class="loader"></div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="hidden text-center py-20">
+            <p class="text-red-500">Error loading files.</p>
+        </div>
+
+        <!-- File Grid -->
+        <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Files injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <svg class="mx-auto h-12 w-12 text-gray-300 dark:text-neutral-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Nothing found</h3>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-light-border dark:border-dark-border mt-auto">
+        <div class="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+            <p class="text-sm text-light-muted dark:text-dark-muted">© 2026 Moolvy Labs. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div id="modal-overlay" class="fixed inset-0 z-[100] hidden">
+        <div class="fixed inset-0 bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-2xl bg-light-bg dark:bg-dark-surface text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border border-light-border dark:border-dark-border opacity-0 scale-95" id="modal-panel">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-light-border dark:border-dark-border">
+                        <div class="flex items-center gap-3">
+                            <div id="modal-icon-container" class="p-2 rounded-lg bg-gray-100 dark:bg-neutral-800"></div>
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-light-text dark:text-dark-text" id="modal-title">filename.txt</h3>
+                                <p class="text-xs text-light-muted dark:text-dark-muted mt-0.5" id="modal-meta">TXT • 2KB</p>
+                            </div>
+                        </div>
+                        <button type="button" id="close-modal" class="rounded-md p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-neutral-800">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="px-6 py-6 max-h-[60vh] overflow-y-auto bg-gray-50 dark:bg-[#0f0f0f] m-4 rounded-xl border border-light-border dark:border-dark-border">
+                        <pre id="modal-content" class="font-mono text-sm text-light-text dark:text-dark-text whitespace-pre-wrap break-words"></pre>
+                    </div>
+                    <div class="bg-light-bg dark:bg-dark-surface px-6 py-4 flex flex-row-reverse border-t border-light-border dark:border-dark-border">
+                        <button type="button" class="inline-flex w-full justify-center rounded-lg bg-black dark:bg-white px-3 py-2 text-sm font-semibold text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 sm:ml-3 sm:w-auto" onclick="closeModal()">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+ 
+        const WIKI_FOLDER = 'wiki/';
+        const WIKI_INDEX = 'wiki-files.json';
+
+        // --- STATE ---
+        let allFiles = [];
+        const allowedExtensions = ['txt', 'md', 'docx'];
+
+        // --- DOM ELEMENTS ---
+        const fileGrid = document.getElementById('file-grid');
+        const searchInput = document.getElementById('search-input');
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const emptyState = document.getElementById('empty-state');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        // Modal Elements
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalPanel = document.getElementById('modal-panel');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMeta = document.getElementById('modal-meta');
+        const modalContent = document.getElementById('modal-content');
+        const modalIconContainer = document.getElementById('modal-icon-container');
+
+        // --- THEME LOGIC ---
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        });
+
+        // --- STATIC FETCH ---
+        async function fetchRepoFiles() {
+            try {
+                const response = await fetch(WIKI_INDEX + '?t=' + Date.now());
+
+                if (!response.ok) throw new Error('Failed to fetch ' + WIKI_INDEX);
+
+                const data = await response.json();
+
+                // Filter only allowed files
+                allFiles = data.filter(item => {
+                    const ext = item.name.split('.').pop().toLowerCase();
+                    return allowedExtensions.includes(ext);
+                }).map(item => ({
+                    name: item.name,
+                    type: item.name.split('.').pop().toLowerCase(),
+                    size: formatBytes(item.size),
+                    downloadUrl: WIKI_FOLDER + item.name
+                }));
+
+                loadingState.classList.add('hidden');
+                fileGrid.classList.remove('hidden');
+                renderFiles(allFiles);
+
+            } catch (error) {
+                console.error(error);
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+            }
+        }
+
+        function formatBytes(bytes, decimals = 1) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        // --- RENDERING ---
+        function getFileIcon(type) {
+            const cls = "w-6 h-6";
+            if (type === 'md') return `<svg class="${cls} text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
+            if (type === 'txt') return `<svg class="${cls} text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
+            return `<svg class="${cls} text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
+        }
+
+        function renderFiles(files) {
+            fileGrid.innerHTML = '';
+            if (files.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            files.forEach(file => {
+                const card = document.createElement('div');
+                card.className = "file-card group relative bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-xl p-5 cursor-pointer hover:border-black dark:hover:border-white transition-colors";
+                card.onclick = () => openFile(file);
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-2 bg-white dark:bg-black rounded-lg shadow-sm border border-light-border dark:border-dark-border">
+                            ${getFileIcon(file.type)}
+                        </div>
+                        <span class="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 uppercase">${file.type}</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-light-text dark:text-dark-text mb-1 truncate group-hover:text-black dark:group-hover:text-white transition-colors">${file.name}</h3>
+                    <div class="flex items-center justify-between mt-4 text-xs text-light-muted dark:text-dark-muted">
+                        <span>${file.size}</span>
+                        <span>GitHub Repo</span>
+                    </div>
+                `;
+                fileGrid.appendChild(card);
+            });
+        }
+
+        // --- SEARCH ---
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allFiles.filter(f => f.name.toLowerCase().includes(term));
+            renderFiles(filtered);
+        });
+
+        // --- MODAL & FILE VIEWING ---
+        async function openFile(file) {
+            // Show loading in modal or just open
+            modalTitle.textContent = file.name;
+            modalMeta.textContent = `${file.type.toUpperCase()} • ${file.size}`;
+            modalIconContainer.innerHTML = getFileIcon(file.type);
+            modalContent.textContent = "Загрузка содержимого...";
+
+            modalOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalPanel.classList.remove('opacity-0', 'scale-95');
+                modalPanel.classList.add('opacity-100', 'scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+
+            // Fetch file content
+            try {
+                const res = await fetch(file.downloadUrl);
+                const text = await res.text();
+
+                // Simple check for binary-like content for docx
+                if (file.type === 'docx') {
+                     modalContent.textContent = "[DOCX Preview]\n\nЭто бинарный файл Word. Браузер не может отобразить его форматирование напрямую.\n\nДля просмотра скачайте файл или используйте предпросмотр текста:\n\n" + text.substring(0, 500) + "...";
+                } else {
+                    modalContent.textContent = text;
+                }
+            } catch (err) {
+                modalContent.textContent = "Ошибка загрузки содержимого файла.";
+            }
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.add('opacity-0');
+            modalPanel.classList.remove('opacity-100', 'scale-100');
+            modalPanel.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                modalOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 200);
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modalPanel.addEventListener('click', (e) => e.stopPropagation());
+        modalOverlay.addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) closeModal();
+        });
+
+        // --- INIT ---
+        initTheme();
+        fetchRepoFiles();
+    </script>
+</body>
+</html>

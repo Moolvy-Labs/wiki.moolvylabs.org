@@ -1,0 +1,46 @@
+name: Generate wiki file index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wiki/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Generate wiki-files.json
+        run: |
+          echo "[" > wiki-files.json
+          first=true
+          for f in wiki/*; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f")
+            ext="${name##*.}"
+            case "$ext" in
+              txt|md|docx) ;;
+              *) continue ;;
+            esac
+            size=$(stat -c%s "$f")
+            if [ "$first" = true ]; then first=false; else echo "," >> wiki-files.json; fi
+            printf '  {"name": "%s", "size": %s}' "$name" "$size" >> wiki-files.json
+          done
+          echo "" >> wiki-files.json
+          echo "]" >> wiki-files.json
+          cat wiki-files.json
+
+      - name: Commit updated index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add wiki-files.json
+          git diff --quiet --cached || git commit -m "Auto-update wiki-files.json"
+          git push

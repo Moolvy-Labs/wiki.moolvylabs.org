@@ -1,0 +1,1 @@
+Morphy-Neo:2B is a new, promising artificial intelligence model that will become the third generation in the lineup. The model will be fully multilingual and will feature advanced text processing capabilities. Thanks to updated algorithms, Morphy-Neo:2B will be able to generate emails even more accurately, precisely, and professionally than its predecessors.
